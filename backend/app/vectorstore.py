@@ -1,5 +1,4 @@
 import chromadb
-from sentence_transformers import SentenceTransformer
 
 COLLECTION_NAME = "mf_faq_corpus"
 CHROMA_PATH = "./chroma_db"
@@ -11,9 +10,10 @@ _client = None
 _collection = None
 
 
-def _get_model() -> SentenceTransformer:
+def _get_model():
     global _model
     if _model is None:
+        from sentence_transformers import SentenceTransformer
         _model = SentenceTransformer(EMBED_MODEL)
     return _model
 
