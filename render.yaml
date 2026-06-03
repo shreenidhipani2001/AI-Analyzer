@@ -1,7 +1,7 @@
 services:
   - type: web
     name: mf-faq-backend
-    runtime: python
+    env: python
     pythonVersion: 3.11.0
     region: singapore
     plan: free
