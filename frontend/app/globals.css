@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ── */
+html, body { height: 100%; }
+
+body {
+  background: linear-gradient(135deg, #ff9a56 0%, #ffb347 45%, #ffcd3c 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  font-family: 'Poppins', system-ui, sans-serif;
+  color: #1a0a00;
+}
+
+/* ── Card styles ── */
+.sunny-card {
+  background: #ffffff;
+  border: 1.5px solid rgba(255, 122, 47, 0.25);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(255, 122, 47, 0.12);
+}
+
+.sunny-card-warm {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid rgba(255, 122, 47, 0.3);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 24px rgba(255, 122, 47, 0.15);
+}
+
+/* ── Star / dot field — must be fixed so it doesn't push layout ── */
+.star-field {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* ── Analyst character animations ── */
+.analyst-idle   { animation: bounce2 2s ease-in-out infinite; }
+.analyst-active { animation: reading-body 1.6s ease-in-out infinite; }
+
+.chart-bar-1 { animation: bar-grow 1.4s ease-in-out infinite 0s; }
+.chart-bar-2 { animation: bar-grow 1.4s ease-in-out infinite 0.2s; }
+.chart-bar-3 { animation: bar-grow 1.4s ease-in-out infinite 0.4s; }
+.chart-bar-4 { animation: bar-grow 1.4s ease-in-out infinite 0.1s; }
+
+.coin-1 { animation: coin-float 2.4s ease-in-out infinite 0s; }
+.coin-2 { animation: coin-float 2.8s ease-in-out infinite 0.5s; }
+.coin-3 { animation: coin-float 2.2s ease-in-out infinite 1.0s; }
+
+/* ── Keyframes ── */
+@keyframes bounce2 {
+  0%,100% { transform: translateY(0px) scale(1); }
+  40%     { transform: translateY(-12px) scale(1.03); }
+  60%     { transform: translateY(-6px) scale(1.01); }
+}
+
+@keyframes reading-body {
+  0%,100% { transform: rotate(-2deg) translateY(0px); }
+  50%     { transform: rotate(2deg) translateY(-4px); }
+}
+
+@keyframes bar-grow {
+  0%,100% { transform: scaleY(0.6); opacity: 0.7; }
+  50%     { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes coin-float {
+  0%,100% { transform: translateY(0) rotate(0deg); opacity: 0.9; }
+  50%     { transform: translateY(-10px) rotate(15deg); opacity: 1; }
+}
+
+@keyframes fadeinup {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeinup { animation: fadeinup 0.35s ease-out both; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,122,47,0.4); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,122,47,0.7); }

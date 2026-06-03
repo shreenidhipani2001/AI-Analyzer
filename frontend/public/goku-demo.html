@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Goku — Character Demo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:linear-gradient(135deg,#ff9a56 0%,#ffb347 45%,#ffcd3c 100%);
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:'Segoe UI',system-ui,sans-serif;
+  overflow:hidden;
+}
+.page{display:flex;flex-direction:column;align-items:center;gap:18px}
+
+.title{color:#fff;font-size:2rem;font-weight:900;letter-spacing:6px;
+  text-shadow:0 0 20px rgba(255,200,0,0.8),0 2px 8px rgba(0,0,0,0.3)}
+.subtitle{color:rgba(255,255,255,0.75);font-size:0.7rem;letter-spacing:4px;text-transform:uppercase;margin-top:-14px}
+
+.power-bar{
+  background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,210,0,0.5);border-radius:8px;
+  padding:6px 24px;color:#ffcd3c;font-size:11px;font-weight:800;letter-spacing:3px;
+  text-transform:uppercase;transition:color .4s,border-color .4s;
+}
+
+.stage{
+  position:relative;width:240px;height:340px;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.ground{
+  position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  width:140px;height:16px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(255,210,0,.5) 0%,transparent 70%);
+  pointer-events:none;transition:background .5s;
+}
+#svg-wrap{position:absolute;bottom:0;left:50%;transform:translateX(-50%)}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:420px}
+.btn{
+  padding:8px 16px;border-radius:20px;border:2px solid rgba(255,255,255,.45);
+  background:rgba(255,255,255,.18);color:#fff;font-weight:700;font-size:12px;
+  cursor:pointer;letter-spacing:.5px;transition:all .2s;backdrop-filter:blur(6px);
+}
+.btn:hover{background:rgba(255,255,255,.35);transform:translateY(-1px)}
+.btn.active{background:#fff;color:#f97316;border-color:#fff}
+
+/* ── Body animations ── */
+@keyframes idle{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-5px)}
+}
+@keyframes charge{
+  0%,100%{transform:translateX(0) rotate(0)}
+  25%{transform:translateX(-2px) rotate(-.5deg)}
+  75%{transform:translateX(2px) rotate(.5deg)}
+}
+@keyframes fly{
+  0%,100%{transform:translateY(0) rotate(0)}
+  40%{transform:translateY(-10px) rotate(-1deg)}
+  70%{transform:translateY(-6px) rotate(.5deg)}
+}
+@keyframes aura-pulse{
+  0%,100%{opacity:.5;transform:scale(1)}
+  50%{opacity:.9;transform:scale(1.12)}
+}
+@keyframes aura-inner{
+  0%,100%{opacity:.3;transform:scale(.9)}
+  50%{opacity:.7;transform:scale(1.06)}
+}
+@keyframes spark{
+  0%{opacity:1;transform:translateY(0) translateX(0) scale(1)}
+  100%{opacity:0;transform:translateY(-70px) translateX(var(--dx)) scale(0)}
+}
+@keyframes ground-pulse{
+  0%,100%{transform:translateX(-50%) scaleX(1);opacity:.5}
+  50%{transform:translateX(-50%) scaleX(1.5);opacity:1}
+}
+@keyframes ssj-glow{
+  0%,100%{filter:drop-shadow(0 0 10px rgba(255,230,0,.9)) drop-shadow(0 0 28px rgba(255,180,0,.6))}
+  50%{filter:drop-shadow(0 0 22px rgba(255,255,0,1)) drop-shadow(0 0 50px rgba(255,210,0,.9))}
+}
+@keyframes hair-ssj{
+  0%,100%{transform:skewX(0) skewY(0)}
+  30%{transform:skewX(-1.5deg) skewY(.5deg)}
+  70%{transform:skewX(1.5deg) skewY(-.5deg)}
+}
+@keyframes eye-glow{
+  0%,100%{opacity:.7}
+  50%{opacity:1}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="title">GOKU</div>
+  <div class="subtitle">Dragon Ball · Interactive States</div>
+
+  <div class="power-bar" id="pwr">POWER LEVEL: 9,000</div>
+
+  <div class="stage">
+    <div class="ground" id="gnd"></div>
+    <div id="svg-wrap"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn active" onclick="set('idle',this)">😌 Idle</button>
+    <button class="btn" onclick="set('charge',this)">⚡ Charging</button>
+    <button class="btn" onclick="set('ssj',this)">✨ Super Saiyan</button>
+    <button class="btn" onclick="set('ready',this)">👊 Battle Ready</button>
+    <button class="btn" onclick="set('crossed',this)">🚫 Arms Crossed</button>
+    <button class="btn" onclick="set('kamehameha',this)">💥 Kamehameha</button>
+  </div>
+</div>
+
+<script>
+const CFG={
+  idle:    {pwr:'9,000',       bodyAnim:'idle 3s ease-in-out infinite',aura:false,ssj:false,pwrCol:'#ffcd3c'},
+  charge:  {pwr:'450,000',     bodyAnim:'charge .35s ease-in-out infinite',aura:true, ssj:false,pwrCol:'#80cfff'},
+  ssj:     {pwr:'OVER 9,000,000',bodyAnim:'fly 2s ease-in-out infinite',  aura:true, ssj:true, pwrCol:'#ffe000'},
+  ready:   {pwr:'150,000',     bodyAnim:'idle 2.5s ease-in-out infinite', aura:false,ssj:false,pwrCol:'#ffcd3c'},
+  crossed: {pwr:'9,001',       bodyAnim:'idle 4s ease-in-out infinite',   aura:false,ssj:false,pwrCol:'#ffcd3c'},
+  kamehameha:{pwr:'MAXIMUM',   bodyAnim:'charge .25s ease-in-out infinite',aura:true,ssj:true, pwrCol:'#00e5ff'},
+};
+
+function arms(state){
+  /* returns {Lpath,Rpath,Lcx,Lcy,Rcx,Rcy} */
+  if(state==='charge')   return{Lp:'M72,138 Q52,148 40,158',Lx:38,Ly:158,Rp:'M128,138 Q148,148 160,158',Rx:162,Ry:158};
+  if(state==='ssj')      return{Lp:'M72,135 Q44,122 30,130',Lx:28,Ly:130,Rp:'M128,135 Q156,122 170,130',Rx:172,Ry:130};
+  if(state==='ready')    return{Lp:'M72,138 Q56,118 52,100',Lx:50,Ly:98, Rp:'M128,138 Q144,118 148,100',Rx:150,Ry:98};
+  if(state==='crossed')  return{Lp:'M72,138 Q88,132 112,142',Lx:114,Ly:144,Rp:'M128,138 Q112,132 88,142',Rx:86,Ry:144};
+  if(state==='kamehameha')return{Lp:'M72,138 Q54,155 42,148',Lx:40,Ly:147,Rp:'M128,138 Q146,155 158,148',Rx:160,Ry:147};
+  /* idle */                return{Lp:'M72,138 Q58,158 55,178',Lx:53,Ly:180,Rp:'M128,138 Q142,158 145,178',Rx:147,Ry:180};
+}
+
+function build(state){
+  const c=CFG[state];
+  const hc=c.ssj?'#f5d800':'#180c00';     // hair fill
+  const hl=c.ssj?'#fff176':'#3b2010';     // hair highlight
+  const ec=c.ssj?'#00e5ff':'#3b82f6';     // eye color
+  const ac=c.ssj?{o:'rgba(255,230,0,.28)',i:'rgba(255,250,120,.45)',line:'#ffe000'}
+                :{o:'rgba(100,190,255,.22)',i:'rgba(150,210,255,.38)',line:'#90caf9'};
+  const A=arms(state);
+
+  const eyebrowPath=state==='ssj'||state==='charge'||state==='kamehameha'
+    ?`<path d="M79,64 Q86,58 93,63" stroke="${hc}" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+      <path d="M107,63 Q114,58 121,64" stroke="${hc}" stroke-width="3.8" fill="none" stroke-linecap="round"/>`
+    :state==='crossed'
+    ?`<path d="M79,65 Q86,60 93,65" stroke="${hc}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M107,65 Q114,60 121,65" stroke="${hc}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+    :`<path d="M79,66 Q86,61 93,65" stroke="${hc}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M107,65 Q114,61 121,66" stroke="${hc}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+
+  const mouthPath=state==='ssj'||state==='charge'
+    ?`<path d="M87,97 L113,97" stroke="#8b3010" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M91,97 L93,101 L99,97" stroke="#8b3010" stroke-width="1.5" fill="none"/>
+      <path d="M101,97 L107,101 L111,97" stroke="#8b3010" stroke-width="1.5" fill="none"/>`
+    :state==='kamehameha'
+    ?`<path d="M86,96 Q100,104 114,96" stroke="#8b3010" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M90,97 L92,101 L97,97" stroke="#8b3010" stroke-width="1.5" fill="none"/>
+      <path d="M103,97 L108,101 L110,97" stroke="#8b3010" stroke-width="1.5" fill="none"/>`
+    :state==='crossed'
+    ?`<path d="M88,97 Q100,101 109,94" stroke="#8b3010" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+    :`<path d="M88,96 Q100,105 112,96" stroke="#8b3010" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+
+  const kamehamehaBeam = state==='kamehameha'?`
+    <!-- Kamehameha energy ball between hands -->
+    <g>
+      <circle cx="100" cy="160" r="20" fill="rgba(0,220,255,0.15)" style="animation:aura-pulse .4s ease-in-out infinite"/>
+      <circle cx="100" cy="160" r="14" fill="rgba(0,230,255,0.25)" style="animation:aura-inner .4s ease-in-out infinite .1s"/>
+      <circle cx="100" cy="160" r="8"  fill="rgba(100,240,255,0.5)" style="animation:aura-pulse .3s ease-in-out infinite .05s"/>
+      <circle cx="100" cy="160" r="4"  fill="white" opacity=".9"/>
+    </g>
+  `:'';
+
+  return `
+<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg" width="220" height="330"
+     style="${c.ssj?'animation:ssj-glow 1.5s ease-in-out infinite':''}">
+<defs>
+  <filter id="glow2">
+    <feGaussianBlur stdDeviation="5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="hglow">
+    <feGaussianBlur stdDeviation="3" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <radialGradient id="sg" cx="42%" cy="32%" r="60%">
+    <stop offset="0%" stop-color="#f7c99a"/>
+    <stop offset="55%" stop-color="#e8a86e"/>
+    <stop offset="100%" stop-color="#c97840"/>
+  </radialGradient>
+  <linearGradient id="og" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#ff9500"/>
+    <stop offset="50%" stop-color="#f97316"/>
+    <stop offset="100%" stop-color="#e55a00"/>
+  </linearGradient>
+  <linearGradient id="bg" x1="0%" y1="0%" x2="80%" y2="100%">
+    <stop offset="0%" stop-color="#1d4ed8"/>
+    <stop offset="100%" stop-color="#1e3a8a"/>
+  </linearGradient>
+  <radialGradient id="ag" cx="50%" cy="55%" r="50%">
+    <stop offset="0%" stop-color="${ac.i}"/>
+    <stop offset="100%" stop-color="${ac.o}" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="${hl}"/>
+    <stop offset="100%" stop-color="${hc}"/>
+  </radialGradient>
+</defs>
+
+${c.aura?`
+<!-- ── AURA ── -->
+<ellipse cx="100" cy="195" rx="75" ry="130" fill="url(#ag)"
+  style="animation:aura-pulse 1.2s ease-in-out infinite" filter="url(#glow2)"/>
+<ellipse cx="100" cy="185" rx="50" ry="95" fill="${ac.i}" opacity=".25"
+  style="animation:aura-inner .8s ease-in-out infinite .2s"/>
+
+<!-- Aura flame spikes -->
+${Array.from({length:10},(_,i)=>{
+  const ang=(i*36-10)*Math.PI/180;
+  const r1=55+Math.sin(i*2.3)*12;
+  const r2=95+Math.cos(i*1.9)*30;
+  const cx=100+Math.cos(ang)*r1, cy=185+Math.sin(ang)*r1*1.15;
+  const ex=100+Math.cos(ang)*r2, ey=185+Math.sin(ang)*r2*1.15;
+  return `<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}"
+    stroke="${ac.line}" stroke-width="${(1.5+Math.sin(i)*.8).toFixed(1)}" opacity=".65" stroke-linecap="round"
+    style="animation:aura-pulse ${(.7+i*.09).toFixed(2)}s ease-in-out infinite ${(i*.12).toFixed(2)}s"/>`;
+}).join('')}
+
+<!-- Sparks / ki particles -->
+${Array.from({length:12},(_,i)=>{
+  const x=(35+Math.abs(Math.sin(i*1.4)*130)).toFixed(1);
+  const y=(80+Math.abs(Math.cos(i*1.1)*195)).toFixed(1);
+  const sz=(1.5+Math.sin(i*2.2)*1.5).toFixed(1);
+  const dx=(-35+Math.sin(i*1.9)*70).toFixed(1);
+  const dur=(1.2+i*.18).toFixed(2);
+  const del=(i*.28).toFixed(2);
+  return `<circle cx="${x}" cy="${y}" r="${sz}" fill="${c.ssj?'#ffe082':'#b3e5fc'}" opacity=".85"
+    style="animation:spark ${dur}s ease-out infinite ${del}s;--dx:${dx}px"/>`;
+}).join('')}
+`:''}
+
+<!-- ── BODY (animated wrapper) ── -->
+<g style="animation:${c.bodyAnim};transform-origin:100px 280px">
+
+  <!-- BOOTS -->
+  <path d="M75,268 Q69,271 65,280 Q62,288 70,291 L97,291 Q101,289 101,282 L101,268Z" fill="#1a3080"/>
+  <path d="M125,268 Q131,271 135,280 Q138,288 130,291 L103,291 Q99,289 99,282 L99,268Z" fill="#1a3080"/>
+  <path d="M67,279 Q65,286 71,290 L95,290" stroke="#132060" stroke-width="1.2" fill="none"/>
+  <path d="M133,279 Q135,286 129,290 L105,290" stroke="#132060" stroke-width="1.2" fill="none"/>
+
+  <!-- LEGS -->
+  <path d="M80,222 Q76,242 75,268 L101,268 L101,222Z" fill="url(#og)"/>
+  <path d="M120,222 Q124,242 125,268 L99,268 L99,222Z" fill="url(#og)"/>
+  <path d="M82,228 Q79,244 78,260" stroke="#e05000" stroke-width="1.2" fill="none" opacity=".5"/>
+  <path d="M118,228 Q121,244 122,260" stroke="#e05000" stroke-width="1.2" fill="none" opacity=".5"/>
+
+  <!-- BELT -->
+  <rect x="72" y="212" width="56" height="14" rx="3" fill="#1a3080"/>
+  <!-- Belt knot -->
+  <path d="M94,210 L100,215 L106,210 L106,228 L100,222 L94,228Z" fill="#142470"/>
+  <rect x="94" y="210" width="12" height="18" rx="2" fill="#152570"/>
+
+  <!-- TORSO -->
+  <path d="M72,138 Q64,148 64,178 L64,214 Q100,221 136,214 L136,178 Q136,148 128,138Z"
+        fill="url(#og)"/>
+  <path d="M79,142 Q77,168 77,204" stroke="#e05000" stroke-width="1.5" fill="none" opacity=".5"/>
+  <path d="M121,142 Q123,168 123,204" stroke="#e05000" stroke-width="1.5" fill="none" opacity=".5"/>
+  <!-- Fabric crease center -->
+  <path d="M100,160 L100,212" stroke="#e05000" stroke-width="1" fill="none" opacity=".3"/>
+
+  <!-- BLUE UNDERSHIRT collar V -->
+  <path d="M88,138 L100,162 L112,138 L109,138 Q100,155 91,138Z" fill="url(#bg)"/>
+  <!-- Shoulders blue peek -->
+  <path d="M72,138 Q78,132 88,130 L88,138Z" fill="url(#bg)"/>
+  <path d="M128,138 Q122,132 112,130 L112,138Z" fill="url(#bg)"/>
+
+  <!-- ── ARMS ── -->
+  <!-- Left arm -->
+  <path d="${A.Lp}" stroke="url(#og)" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <path d="${A.Lp}" stroke="#ff9500" stroke-width="14" fill="none" stroke-linecap="round" opacity=".6"/>
+  <!-- Left wristband (blue) -->
+  <circle cx="${A.Lx}" cy="${A.Ly}" r="11" fill="#1d4ed8"/>
+  <circle cx="${A.Lx}" cy="${A.Ly}" r="9"  fill="#2563eb"/>
+  <!-- Left hand -->
+  <circle cx="${A.Lx}" cy="${A.Ly-1}" r="9.5" fill="url(#sg)"/>
+  ${state==='ready'||state==='kamehameha'?`
+    <path d="M${A.Lx-6},${A.Ly-5} L${A.Lx+6},${A.Ly-5}" stroke="#b86030" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M${A.Lx-6},${A.Ly-2} L${A.Lx+6},${A.Ly-2}" stroke="#b86030" stroke-width="1"   stroke-linecap="round" opacity=".5"/>
+  `:''}
+
+  <!-- Right arm -->
+  <path d="${A.Rp}" stroke="url(#og)" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <path d="${A.Rp}" stroke="#ff9500" stroke-width="14" fill="none" stroke-linecap="round" opacity=".6"/>
+  <!-- Right wristband -->
+  <circle cx="${A.Rx}" cy="${A.Ry}" r="11" fill="#1d4ed8"/>
+  <circle cx="${A.Rx}" cy="${A.Ry}" r="9"  fill="#2563eb"/>
+  <!-- Right hand -->
+  <circle cx="${A.Rx}" cy="${A.Ry-1}" r="9.5" fill="url(#sg)"/>
+  ${state==='ready'||state==='kamehameha'?`
+    <path d="M${A.Rx-6},${A.Ry-5} L${A.Rx+6},${A.Ry-5}" stroke="#b86030" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M${A.Rx-6},${A.Ry-2} L${A.Rx+6},${A.Ry-2}" stroke="#b86030" stroke-width="1"   stroke-linecap="round" opacity=".5"/>
+  `:''}
+
+  ${kamehamehaBeam}
+
+  <!-- NECK -->
+  <path d="M91,107 Q91,125 91,138 L109,138 Q109,125 109,107 Q105,103 100,103 Q95,103 91,107Z"
+        fill="url(#sg)"/>
+  <path d="M94,110 L94,136" stroke="#c07040" stroke-width="1" opacity=".35"/>
+  <path d="M106,110 L106,136" stroke="#c07040" stroke-width="1" opacity=".35"/>
+
+  <!-- ── HEAD ── -->
+  <path d="M67,74 Q67,38 100,34 Q133,38 133,74 Q133,104 118,112 Q108,118 100,118 Q92,118 82,112 Q67,104 67,74Z"
+        fill="url(#sg)"/>
+
+  <!-- Jaw definition -->
+  <path d="M83,112 Q90,122 100,124 Q110,122 117,112"
+        stroke="#c07040" stroke-width=".8" fill="none" opacity=".45"/>
+
+  <!-- EARS -->
+  <path d="M67,74 Q59,70 58,80 Q57,91 67,90Z" fill="url(#sg)"/>
+  <path d="M64,76 Q60,82 61,88 Q63,91 67,90" stroke="#b87040" stroke-width="1" fill="none" opacity=".45"/>
+  <path d="M133,74 Q141,70 142,80 Q143,91 133,90Z" fill="url(#sg)"/>
+  <path d="M136,76 Q140,82 139,88 Q137,91 133,90" stroke="#b87040" stroke-width="1" fill="none" opacity=".45"/>
+
+  <!-- ── HAIR ── -->
+  ${c.ssj?`
+  <!-- SSJ GOLDEN HAIR -->
+  <g style="animation:hair-ssj 1.5s ease-in-out infinite" filter="url(#hglow)">
+    <!-- Back mass -->
+    <path d="M67,74 Q61,44 74,26 Q82,14 91,22 Q96,10 100,8 Q104,10 109,22 Q118,14 126,26 Q139,44 133,74 Q119,54 100,51 Q81,54 67,74Z"
+          fill="url(#hg)"/>
+    <!-- Large upward spikes -->
+    <path d="M84,52 Q81,28 88,10 Q94,-2 98,16 Q96,34 94,52Z"  fill="${hc}"/>
+    <path d="M91,52 Q95,22 100,6 Q105,22 109,52Z"              fill="${hl}"/>
+    <path d="M106,52 Q110,26 118,12 Q122,0 125,18 Q120,36 108,52Z" fill="${hc}"/>
+    <!-- Left side spikes -->
+    <path d="M71,68 Q54,48 49,30 Q55,25 62,38 Q65,52 72,62Z" fill="${hc}"/>
+    <path d="M68,82 Q46,72 42,54 Q49,48 57,62 Q63,74 69,78Z" fill="${hc}"/>
+    <!-- Right side spike -->
+    <path d="M129,68 Q146,48 151,30 Q145,25 138,38 Q135,52 128,62Z" fill="${hc}"/>
+    <!-- Inner top hair -->
+    <path d="M77,72 Q82,52 100,50 Q118,52 123,72" fill="${hc}" opacity=".85"/>
+  </g>
+  `:`
+  <!-- NORMAL BLACK HAIR -->
+  <!-- Back mass -->
+  <path d="M67,74 Q61,44 73,28 Q81,16 91,22 Q96,12 100,10 Q104,12 109,22 Q119,16 127,28 Q139,44 133,74 Q119,54 100,51 Q81,54 67,74Z"
+        fill="url(#hg)"/>
+  <!-- Spikes up -->
+  <path d="M83,52 Q81,32 87,14 Q92,4 96,20 Q94,36 93,52Z"       fill="${hc}"/>
+  <path d="M91,52 Q94,26 100,10 Q106,26 109,52Z"                 fill="${hl}" opacity=".4"/>
+  <path d="M107,52 Q112,28 119,16 Q123,6 126,22 Q121,38 110,52Z" fill="${hc}"/>
+  <!-- Left side spikes -->
+  <path d="M71,68 Q55,50 51,33 Q57,28 64,40 Q67,54 72,62Z" fill="${hc}"/>
+  <path d="M68,82 Q48,73 45,57 Q51,51 58,64 Q63,75 69,79Z" fill="${hc}"/>
+  <!-- Right side spike -->
+  <path d="M129,68 Q145,50 149,33 Q143,28 136,40 Q133,54 128,62Z" fill="${hc}"/>
+  <!-- Front bangs -->
+  <path d="M79,60 Q83,48 89,53 Q85,62 82,70Z" fill="${hc}"/>
+  <path d="M117,62 Q115,48 111,53 Q115,64 118,72Z" fill="${hc}"/>
+  <!-- Inner top -->
+  <path d="M77,72 Q82,52 100,50 Q118,52 123,72" fill="${hc}"/>
+  `}
+
+  <!-- ── FACE ── -->
+
+  ${eyebrowPath}
+
+  <!-- Eye whites (left) -->
+  <path d="M79,72 Q81,65 89,65 Q97,65 98,72 Q97,79 89,79 Q81,79 79,72Z" fill="white"/>
+  <!-- Iris left -->
+  <circle cx="89" cy="72" r="5.8" fill="${ec}"/>
+  <circle cx="89" cy="72" r="3.8" fill="${c.ssj?'#0097a7':'#1d4ed8'}"/>
+  <circle cx="89" cy="72" r="2.2" fill="#05081a"/>
+  <circle cx="91" cy="69" r="1.6" fill="white" opacity=".95"/>
+  <circle cx="87" cy="74" r=".9"  fill="white" opacity=".5"/>
+  <!-- Upper lid left -->
+  <path d="M79,72 Q84,64 89,65 Q94,65 98,72" stroke="#201008" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  ${c.ssj?`<circle cx="89" cy="72" r="7" fill="none" stroke="${ec}" stroke-width=".8" opacity=".5" style="animation:eye-glow 1s ease-in-out infinite"/>`:''}
+
+  <!-- Eye whites (right) -->
+  <path d="M102,72 Q103,65 111,65 Q119,65 121,72 Q119,79 111,79 Q103,79 102,72Z" fill="white"/>
+  <!-- Iris right -->
+  <circle cx="111" cy="72" r="5.8" fill="${ec}"/>
+  <circle cx="111" cy="72" r="3.8" fill="${c.ssj?'#0097a7':'#1d4ed8'}"/>
+  <circle cx="111" cy="72" r="2.2" fill="#05081a"/>
+  <circle cx="113" cy="69" r="1.6" fill="white" opacity=".95"/>
+  <circle cx="109" cy="74" r=".9"  fill="white" opacity=".5"/>
+  <!-- Upper lid right -->
+  <path d="M102,72 Q106,64 111,65 Q116,65 121,72" stroke="#201008" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  ${c.ssj?`<circle cx="111" cy="72" r="7" fill="none" stroke="${ec}" stroke-width=".8" opacity=".5" style="animation:eye-glow 1s ease-in-out infinite .15s"/>`:''}
+
+  <!-- Nose -->
+  <path d="M97,82 Q100,87 103,82" stroke="#b06030" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M98,86 Q100,90 102,86" stroke="#b06030" stroke-width="1"   fill="none" opacity=".4"/>
+
+  <!-- Mouth -->
+  ${mouthPath}
+
+  <!-- Cheek blush (subtle, anime style) -->
+  <ellipse cx="78"  cy="82" rx="9" ry="5.5" fill="#ffb09a" opacity=".22"/>
+  <ellipse cx="122" cy="82" rx="9" ry="5.5" fill="#ffb09a" opacity=".22"/>
+
+</g><!-- end body group -->
+
+</svg>`;
+}
+
+function set(state,btn){
+  const c=CFG[state];
+  // Power bar
+  const p=document.getElementById('pwr');
+  p.textContent=`POWER LEVEL: ${c.pwr}`;
+  p.style.color=c.pwrCol;
+  p.style.borderColor=c.pwrCol.replace(')',', .5)').replace('rgb','rgba');
+
+  // Ground glow
+  const g=document.getElementById('gnd');
+  if(c.ssj){
+    g.style.background='radial-gradient(ellipse,rgba(255,230,0,.65) 0%,transparent 70%)';
+    g.style.animation='ground-pulse 1.2s ease-in-out infinite';
+    g.style.width='170px';
+  } else if(c.aura){
+    g.style.background='radial-gradient(ellipse,rgba(120,200,255,.6) 0%,transparent 70%)';
+    g.style.animation='ground-pulse 1.5s ease-in-out infinite';
+    g.style.width='160px';
+  } else {
+    g.style.background='radial-gradient(ellipse,rgba(255,210,60,.4) 0%,transparent 70%)';
+    g.style.animation='none';
+    g.style.width='140px';
+  }
+
+  // Render character
+  document.getElementById('svg-wrap').innerHTML=build(state);
+
+  // Buttons
+  document.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Init
+document.getElementById('svg-wrap').innerHTML=build('idle');
+</script>
+</body>
+</html>

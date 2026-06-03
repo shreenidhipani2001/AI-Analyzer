@@ -1,0 +1,38 @@
+SUPPLEMENTARY FACTS — Mirae Asset Mutual Fund Schemes
+Source: Official SEBI product labeling, AMC factsheets, KIMs (as of May 2026)
+
+== RISKOMETER LEVELS ==
+Mirae Asset Large Cap Fund: Very High risk (riskometer: Very High)
+Mirae Asset ELSS Tax Saver Fund: Very High risk (riskometer: Very High)
+Mirae Asset Flexi Cap Fund: Very High risk (riskometer: Very High)
+Mirae Asset Large & Midcap Fund: Very High risk (riskometer: Very High)
+Mirae Asset NYSE FANG+ ETF Fund of Fund: Very High risk (riskometer: Very High)
+
+Note: All five schemes are equity/equity-oriented schemes. Per SEBI's product labeling master
+circular, equity schemes investing predominantly in stocks are classified "Very High" on the
+riskometer. Any change is communicated via Notice cum Addendum and published on the AMC
+website and AMFI.
+
+== FUND MANAGERS (as per latest KIM/SID) ==
+Mirae Asset Large Cap Fund: Fund Manager — Gaurav Misra (Equity), Bharti Sawant (Overseas)
+Mirae Asset ELSS Tax Saver Fund: Fund Manager — Gaurav Misra (Equity), Bharti Sawant (Overseas)
+Mirae Asset Flexi Cap Fund: Fund Manager — Gaurav Misra (Lead, Equity), Ritesh Gupta (Co-Manager)
+Mirae Asset Large & Midcap Fund: Fund Manager — Gaurav Misra (Lead), Siddhant Chhabria (Co-Manager)
+Mirae Asset NYSE FANG+ ETF Fund of Fund: Fund Manager — Ekta Gala (Fund of Funds)
+
+== BENCHMARKS ==
+Mirae Asset Large Cap Fund: Nifty 100 Total Return Index (TRI)
+Mirae Asset ELSS Tax Saver Fund: Nifty 500 TRI (Tier 1 Benchmark)
+Mirae Asset Flexi Cap Fund: Nifty 500 TRI
+Mirae Asset Large & Midcap Fund: Nifty Large Midcap 250 TRI
+Mirae Asset NYSE FANG+ ETF Fund of Fund: NYSE FANG+ Total Return Index (INR)
+
+== SCHEME TYPE ==
+Mirae Asset Large Cap Fund: Open-ended large cap equity scheme
+Mirae Asset ELSS Tax Saver Fund: Open-ended ELSS (Equity Linked Savings Scheme), 3-year lock-in
+Mirae Asset Flexi Cap Fund: Open-ended dynamic equity scheme (large, mid, small cap)
+Mirae Asset Large & Midcap Fund: Open-ended large and mid cap equity scheme (formerly Emerging Bluechip Fund)
+Mirae Asset NYSE FANG+ ETF Fund of Fund: Open-ended Fund of Fund investing in Mirae Asset NYSE FANG+ ETF
+
+Source URL: https://www.miraeassetmf.co.in/mutual-fund-scheme
+Last updated: 2026-06-03
